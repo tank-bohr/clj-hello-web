@@ -26,7 +26,11 @@
         [:title "Hello world"]]
       [:body
         [:div {:id "content"} (str "Привет, " name "!")]
-        (form/form-to ["POST" "create"]
+        (if (not (nil? name-from-cookies))
+          (form/form-to ["DELETE", "hello"]
+            (af/anti-forgery-field)
+            (form/submit-button "Выход")))
+        (form/form-to ["POST" "hello"]
           (form/text-field {:placeholder "Enter name"} "name")
           (af/anti-forgery-field)
           (form/submit-button "Отправить"))
@@ -35,13 +39,20 @@
 (defn create
   [name]
   (assoc
-    (resp/redirect (str "/hello"))
+    (resp/redirect "/hello")
     :cookies {"hw_name" {:value name :http-only true}} ))
+
+(defn destroy
+  []
+  (assoc
+    (resp/redirect "/hello")
+    :cookies {"hw_name" {:value "" :max-age 0 :http-only true}} ))
 
 (defroutes app-routes
   (GET "/" [] (index))
   (GET "/hello" request (hello request))
-  (POST "/create" [name] (create name))
+  (POST "/hello" [name] (create name))
+  (DELETE "/hello" [] (destroy))
   (route/not-found "Not Found"))
 
 (def app
